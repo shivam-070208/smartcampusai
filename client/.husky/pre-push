@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+# Abort pushes to protected branches
+
+branch_name="$(git symbolic-ref --short HEAD 2>/dev/null || true)"
+
+case "$branch_name" in
+  main|master)
+    echo "❌ Push blocked: direct pushes to '$branch_name' are not allowed." >&2
+    echo "Please open a PR from another branch instead." >&2
+    exit 1
+    ;;
+  *)
+    # allow push
+    ;;
+    
+esac
+

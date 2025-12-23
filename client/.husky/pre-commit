@@ -1,0 +1,4 @@
+echo "Running liniting test test in repo"
+npm run lint
+echo  "Running build command to build repo"
+npm run build
