@@ -7,6 +7,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   User,
+  signInWithPopup,
+  GoogleAuthProvider,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase-config";
 import { redirect } from "next/navigation";
@@ -17,6 +19,7 @@ type AuthContextType = {
   signup: (email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  googleAuth:()=>Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -32,15 +35,9 @@ export const AuthProvider = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth) {
-      // Firebase not configured, simulate logged in for demo
-      setUser({} as User); // Fake user
-      setLoading(false);
-      return;
-    }
     const unsub = onAuthStateChanged(auth, async (user) => {
       setUser(user);
-
+      console.log(user)
       setLoading(false);
       if (!user && require) {
         redirect("/login");
@@ -51,26 +48,21 @@ export const AuthProvider = ({
   }, []);
 
   const signup = async (email: string, password: string) => {
-    if (!auth) throw new Error("Firebase not configured");
     await createUserWithEmailAndPassword(auth, email, password);
   };
 
   const login = async (email: string, password: string) => {
-    if (!auth) throw new Error("Firebase not configured");
     await signInWithEmailAndPassword(auth, email, password);
   };
   const logout = async () => {
-    if (!auth) {
-      // Fake logout
-      setUser(null);
-      redirect("/");
-      return;
-    }
     await signOut(auth);
   };
-
+const googleAuth = async () =>{
+  const provider = new GoogleAuthProvider();
+  await signInWithPopup(auth,provider);
+}
   return (
-    <AuthContext.Provider value={{ user, loading, signup, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, signup, login, logout,googleAuth }}>
       {children}
     </AuthContext.Provider>
   );

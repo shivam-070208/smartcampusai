@@ -7,7 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Form, FormField, FormLabel, FormControl, FormMessage,FormItem } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  FormItem,
+} from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,33 +22,25 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState } from "react";
 import { Loader } from "lucide-react";
-import { auth } from "@/lib/firebase-config";
-import {
-    createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FcGoogle } from "react-icons/fc";
+import { useAuth } from "@/components/providers/auth-context";
+import { Separator } from "@/components/ui/separator";
 
 const LoginFormValues = z.object({
-  email: z
-    .string()
-    .email("A valid email is required for submission"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters."),
+  email: z.email("A valid email is required for submission"),
+  password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
-type LoginFormSchema = z.infer<typeof LoginFormValues>;
+type SignupFormSchema = z.infer<typeof LoginFormValues>;
 
 const SignUpFrom = () => {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
-
-  const form = useForm<LoginFormSchema>({
+  const {signup,googleAuth} = useAuth();
+  const form = useForm<SignupFormSchema>({
     defaultValues: {
       email: "",
       password: "",
@@ -50,15 +49,12 @@ const SignUpFrom = () => {
     mode: "onTouched",
   });
 
-
-
- 
-  const onSubmit = async (values: LoginFormSchema) => {
+  const onSubmit = async (values: SignupFormSchema) => {
     setSubmitting(true);
     setErrorMessage(null);
 
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      await signup(values.email, values.password);
       router.push("/dashboard");
     } catch (error: any) {
       setErrorMessage(
@@ -73,8 +69,7 @@ const SignUpFrom = () => {
     setSubmitting(true);
     setErrorMessage(null);
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+    await googleAuth();
       router.push("/dashboard");
     } catch (error: any) {
       setErrorMessage(error?.message || "Something went wrong.");
@@ -92,9 +87,12 @@ const SignUpFrom = () => {
             Enter your email and password to create an account.
           </CardDescription>
           {errorMessage && (
-            <div className="text-red-500 text-sm font-medium mt-2">{errorMessage}</div>
+            <div className="text-red-500 text-sm font-medium mt-2">
+              {errorMessage}
+            </div>
           )}
         </CardHeader>
+        <Separator />
         <CardContent>
           <Form {...form}>
             <form
@@ -140,19 +138,31 @@ const SignUpFrom = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="mt-2 w-full" disabled={submitting}>
+              <Button
+                type="submit"
+                className="mt-2 w-full"
+                disabled={submitting}
+              >
                 {submitting ? "Logging in..." : "Login"}
               </Button>
-              <Button variant="ghost" type="button" onClick={onGoogle} disabled={submitting}>
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={onGoogle}
+                disabled={submitting}
+              >
                 {submitting ? (
                   <Loader className="animate-spin" />
                 ) : (
-                  <><FcGoogle/>Continue with Google</>
+                  <>
+                    <FcGoogle />
+                    Continue with Google
+                  </>
                 )}
               </Button>
               <p className="text-xs font-semibold">have an account?</p>
               <Button variant="outline" asChild>
-                <Link href="/sign-up">Login</Link>
+                <Link href="/login">Login</Link>
               </Button>
             </form>
           </Form>

@@ -22,18 +22,14 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useState } from "react";
 import { Loader } from "lucide-react";
-import { auth } from "@/lib/firebase-config";
-import {
-  GoogleAuthProvider,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-} from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FcGoogle } from "react-icons/fc";
+import { useAuth } from "@/components/providers/auth-context";
+import { Separator } from "@/components/ui/separator";
 
 const LoginFormValues = z.object({
-  email: z.string().email("A valid email is required for submission"),
+  email: z.email("A valid email is required for submission"),
   password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
@@ -43,7 +39,7 @@ const LoginFrom = () => {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
-
+  const { login, googleAuth } = useAuth();
   const form = useForm<LoginFormSchema>({
     defaultValues: {
       email: "",
@@ -53,15 +49,15 @@ const LoginFrom = () => {
     mode: "onTouched",
   });
 
-  // Submission logic placeholder
   const onSubmit = async (values: LoginFormSchema) => {
     setSubmitting(true);
     setErrorMessage(null);
 
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push("/");
+      await login(values.email, values.password);
+      router.push("/dashboard");
     } catch (error: any) {
+      console.log(error);
       setErrorMessage(
         error?.message || "An unknown error occurred. Please try again."
       );
@@ -74,9 +70,8 @@ const LoginFrom = () => {
     setSubmitting(true);
     setErrorMessage(null);
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.push("/");
+      await googleAuth();
+      router.push("/dashboard");
     } catch (error: any) {
       setErrorMessage(error?.message || "Something went wrong.");
     } finally {
@@ -99,6 +94,7 @@ const LoginFrom = () => {
             </div>
           )}
         </CardHeader>
+        <Separator />
         <CardContent>
           <Form {...form}>
             <form
@@ -166,7 +162,7 @@ const LoginFrom = () => {
                   </>
                 )}
               </Button>
-              <p className="text-sm font-semibold">No account</p>
+              <p className="text-xs font-semibold">No account?</p>
               <Button variant="outline" asChild>
                 <Link href="/sign-up">Create New Account</Link>
               </Button>

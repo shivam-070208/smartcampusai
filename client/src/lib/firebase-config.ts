@@ -16,12 +16,10 @@ const firebaseConfig = {
 // Initialize Firebase only if API key is provided
 let app: any = null;
 let auth: any = null;
-let db: any = null;
 
 if (firebaseConfig.apiKey) {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
-  db = getFirestore(app);
 }
 
-export { app, auth, db };
+export { app, auth };
