@@ -1,8 +1,25 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { getCurrentUserId} from "@/components/helpers/auth-helper";
 
 const fetchDashboard = async () => {
-  const res = await fetch("/api/user/dashboard", { cache: "no-store" });
-  if (!res.ok) throw new Error("Failed to fetch dashboard data");
+  const userId = getCurrentUserId();
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+  const res = await fetch("/api/user/dashboard", {
+    cache: "no-store",
+    headers: {
+      "X-User-Id": userId,
+    },
+  });
+  
+  if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error("Authentication required. Please login again.");
+    }
+    throw new Error("Failed to fetch dashboard data");
+  }
+
   return res.json();
 };
 
