@@ -5,8 +5,8 @@ type IssueStatus = "active" | "resolved" | "critical" | "rejected";
 interface Issue {
   id: string;
   title: string;
-  key?:any;
-  description: string;
+  issueKey?: string; 
+   description: string;
   date: string;
   status: IssueStatus;
   location: string;

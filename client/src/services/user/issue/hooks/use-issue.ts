@@ -13,11 +13,11 @@ export interface UserIssue {
 }
 
 export const useFetchIssues = () => {
+  const userId = getCurrentUserId();
+  if (!userId) unauthorized();
   return useSuspenseQuery<UserIssue[]>({
-    queryKey: ["user/issues/fetch"],
+    queryKey: ["user/issues/fetch", userId],
     queryFn: async () => {
-      const userId = getCurrentUserId();
-      if(!userId) unauthorized();
       const res = await fetch("/api/user/issue/fetch", {
         headers: { "X-User-Id": userId },
       });

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -30,10 +30,16 @@ const ReportIssueDialog = () => {
   const [success, setSuccess] = useState<boolean>(false);
 
   const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    return () => {
+      previews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   const resetForm = () => {
     setTitle("");
     setDescription("");
+    previews.forEach((url) => URL.revokeObjectURL(url));
     setImageFiles([]);
     setPreviews([]);
     setLoading(false);
@@ -41,17 +47,21 @@ const ReportIssueDialog = () => {
     setSuccess(false);
     formRef.current?.reset?.();
   };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
     const newFiles = Array.from(files);
     const updatedFiles = [...imageFiles, ...newFiles].slice(0, 4);
+    
+    previews.forEach((url) => URL.revokeObjectURL(url));
+    
     setImageFiles(updatedFiles);
     setPreviews(updatedFiles.map((file) => URL.createObjectURL(file)));
   };
-
   const removeImage = (idx: number) => {
+
+    URL.revokeObjectURL(previews[idx]);
+    
     const newFiles = [...imageFiles];
     const newPreviews = [...previews];
     newFiles.splice(idx, 1);
@@ -59,7 +69,6 @@ const ReportIssueDialog = () => {
     setImageFiles(newFiles);
     setPreviews(newPreviews);
   };
-
   const handlePreSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -84,7 +93,9 @@ const ReportIssueDialog = () => {
 
       if (result.success) {
         setSuccess(true);
-        resetForm();
+        setTimeout(() => {
+          resetForm();
+        }, 2000);
       } else if (result.error) {
         setError(result.error);
       } else {

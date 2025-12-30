@@ -33,16 +33,16 @@ export const useDashboardData = () => {
 };
 
 export const useSummary = () => {
-  const { data,isLoading,isError } = useDashboardData();
-  return {summary:data.summary,isLoading,isError};
+  const { data } = useDashboardData();
+  return { summary: data.summary };
 };
 
 export const useChartData = () => {
-    const { data,isLoading,isError } = useDashboardData();
-    return {chartData:data.chartData,isLoading,isError};
+  const { data } = useDashboardData();
+  return { chartData: data.chartData };
 };
 
 export const useRecents = () => {
-    const { data,isLoading,isError } = useDashboardData();
-  return {recents:data.recents,isLoading,isError};
+  const { data } = useDashboardData();
+  return { recents: data.recents };
 };
