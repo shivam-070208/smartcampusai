@@ -1,7 +1,3 @@
-/***************************************************************************************************************
- *TODO: HERE ALL REPORTED ISSUE BY CORRESPONDING USER WILL BE LISTED, SHOWN AND A POPUP WILL APPEAR TO ADD NEW USER 
- * ASSIGNED TO SHREYASH*
- ***************************************************************************************************************/
 
  "use client";
 
@@ -84,16 +80,10 @@ const issue = () => {
             <p className="text-gray-500 mt-1">Track the status of your reported problems.</p>
           </div>
           
-          {/* <Link 
-            href="/dashboard"
-            className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg transition-colors"
-          >
-            + Report New Issue
-          </Link> */}
+     
         </div>
         <div><ReportIssueDialog/></div>
-         
-        {/* FILTERS Section */}
+
         <div className="flex flex-wrap gap-2">
           {["all", "active", "critical", "resolved", "rejected"].map((status) => (
             <button
