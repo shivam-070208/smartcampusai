@@ -3,6 +3,11 @@ import { db } from "@/lib/firebase-admin";
 import { getUserIdFromRequest } from "@/lib/auth-utils";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-utils";
 
+
+import {generateSlug } from "random-word-slugs"
+import { inngest } from "@/inngest/client";
+
+
 export async function POST(request: NextRequest) {
   try {
     const { userId: authUserId } = await getUserIdFromRequest(request);
@@ -33,24 +38,36 @@ export async function POST(request: NextRequest) {
     if (files.length > 0) {
       imageUrls = await Promise.all(files.map(uploadImageToCloudinary));
     }
+    const date = new Date().toISOString().split("T")[0];
 
     const issueData = {
       title: title.trim(),
       description: description.trim(),
       userId: authUserId,
       status: "active",
-      date: new Date().toISOString().split("T")[0],
+      date,
       images: imageUrls,
       location: location || null,
       createdAt: new Date().toISOString(),
     };
 
     const docRef = await db.collection("issues").add(issueData);
+    try {
+     inngest.send({
+      name:"user/issue.created",
+      data:{
+        issueId:docRef.id
+      }
+     })
+
+    } catch (queueError) {
+      console.error("Failed to enqueue issue for processing:", queueError);
+    }
 
     return NextResponse.json(
       {
-        id: docRef.id,
         ...issueData,
+        id: docRef.id,
       },
       { status: 201 }
     );
