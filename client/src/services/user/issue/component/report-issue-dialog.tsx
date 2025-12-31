@@ -16,25 +16,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
-import { onIssueSubmit } from "@/services/user/issue/lib/action";
 import { getCurrentLocation } from "../lib/utils";
+import { usePublishIssue } from "../hooks/use-issue";
 
 const ReportIssueDialog = () => {
+  const {mutate,isPending,error:publishError,status:success} = usePublishIssue()
+
+
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<boolean>(false);
-
+  const [error, setError] = useState<string | null>(publishError?.message||null);
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
     return () => {
       previews.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
+  useEffect(() => {
+    if (success === "success") {
+      const timeoutId = setTimeout(resetForm, 300);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [success]);
 
   const resetForm = () => {
     setTitle("");
@@ -44,7 +51,6 @@ const ReportIssueDialog = () => {
     setPreviews([]);
     setLoading(false);
     setError(null);
-    setSuccess(false);
     formRef.current?.reset?.();
   };
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,9 +77,7 @@ const ReportIssueDialog = () => {
   };
   const handlePreSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
-    setSuccess(false);
 
     try {
       const submitForm = new FormData(formRef.current!);
@@ -89,26 +93,15 @@ const ReportIssueDialog = () => {
         submitForm.append("images", file);
       });
 
-      const result = await onIssueSubmit(submitForm);
+   mutate(submitForm);
 
-      if (result.success) {
-        setSuccess(true);
-        setTimeout(() => {
-          resetForm();
-        }, 2000);
-      } else if (result.error) {
-        setError(result.error);
-      } else {
-        setError("Failed to submit issue.");
-      }
+
     } catch (err: any) {
       setError(
         err?.message ||
           "An error occurred while submitting the issue. Please try again."
       );
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   return (
@@ -177,14 +170,14 @@ const ReportIssueDialog = () => {
                         fill
                         className="object-cover"
                       />
-                      <button
+                      <Button
                         type="button"
                         onClick={() => removeImage(idx)}
                         className="absolute top-1 right-1 rounded-full bg-black/60 text-white w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Remove image"
                       >
                         ×
-                      </button>
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -196,7 +189,7 @@ const ReportIssueDialog = () => {
               {error}
             </div>
           )}
-          {success && (
+          {success==="success" && (
             <div className="text-green-600 px-2 py-1 rounded bg-green-50 border mt-2">
               Issue submitted successfully!
             </div>
@@ -207,12 +200,12 @@ const ReportIssueDialog = () => {
                 variant="outline"
                 type="button"
                 onClick={resetForm}
-                disabled={loading}
+                disabled={isPending}
               >
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={isPending}>
               {loading ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>

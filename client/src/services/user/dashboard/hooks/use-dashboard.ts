@@ -1,12 +1,11 @@
+import { useAuth } from "@/components/providers/auth-context";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { getCurrentUserId} from "@/lib/auth-utils";
+
 import { unauthorized } from "next/navigation";
 
 const fetchDashboard = async () => {
-  const userId = getCurrentUserId();
-  if (!userId) {
-    unauthorized();
-  }
+  const userId = useAuth().user?.uid;
+  if (!userId) unauthorized();
   const res = await fetch("/api/user/dashboard", {
     cache: "no-store",
     headers: {

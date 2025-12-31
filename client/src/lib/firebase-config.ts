@@ -23,3 +23,7 @@ if (firebaseConfig.apiKey) {
 }
 
 export { app, auth };
+
+
+
+

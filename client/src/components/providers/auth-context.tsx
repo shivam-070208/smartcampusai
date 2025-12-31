@@ -12,6 +12,7 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase-config";
 import { redirect } from "next/navigation";
+import Loader from "../common/loader";
 
 type AuthContextType = {
   user: User | null;
@@ -37,7 +38,6 @@ export const AuthProvider = ({
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       setUser(user);
-      console.log(user)
       setLoading(false);
       if (!user && require) {
         redirect("/login");
@@ -61,6 +61,9 @@ const googleAuth = async () =>{
   const provider = new GoogleAuthProvider();
   await signInWithPopup(auth,provider);
 }
+if(loading) return (
+  <Loader />
+)
   return (
     <AuthContext.Provider value={{ user, loading, signup, login, logout,googleAuth }}>
       {children}
