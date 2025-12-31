@@ -30,9 +30,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <TanstackProvider>    
-          <Container size="xtraLarge" padding="none">
         {children}
-          </Container>
         </TanstackProvider>
       </body>
     </html>
