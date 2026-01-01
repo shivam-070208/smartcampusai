@@ -1,12 +1,13 @@
 "use client";
 import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
 type IssueStatus = "active" | "resolved" | "critical" | "rejected";
 
 interface Issue {
   id: string;
   title: string;
   issueKey?: string; 
-   description: string;
+  description: string;
   date: string;
   status: IssueStatus;
   location: string;
@@ -14,7 +15,9 @@ interface Issue {
 }
 
 const IssueCard = ({ issue }: { issue: Issue }) => {
-    const getStatusStyle = (status: IssueStatus) => {
+  const router = useRouter();
+
+  const getStatusStyle = (status: IssueStatus) => {
     switch (status) {
       case "active": return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "resolved": return "bg-green-100 text-green-800 border-green-200";
@@ -22,10 +25,14 @@ const IssueCard = ({ issue }: { issue: Issue }) => {
       case "rejected": return "bg-gray-100 text-gray-800 border-gray-200";
       default: return "bg-blue-100 text-blue-800";
     }
-  };    
+  };
+
+  const handleViewDetails = () => {
+    router.push(`/issue/${issue.id}`)
+  };
+
   return (
     <motion.div layoutId={`issueCard-${issue.id}`} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row gap-6 items-start">
-      
       <div className="w-full md:w-32 h-32 shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-gray-100">
         {issue.images.length > 0 ? (
           <img 
@@ -68,7 +75,11 @@ const IssueCard = ({ issue }: { issue: Issue }) => {
           {issue.description}
         </p>
         <div className="flex gap-3 border-t border-gray-100 pt-3 mt-auto">
-          <button className="text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-1">
+          <button
+            className="text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-1"
+            onClick={handleViewDetails}
+            type="button"
+          >
             View Details 
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
           </button>
