@@ -38,6 +38,7 @@ type LoginFormSchema = z.infer<typeof LoginFormValues>;
 const LoginFrom = () => {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [adminLogin, setAdminLogin] = useState(false);
   const router = useRouter();
   const { login, googleAuth } = useAuth();
   const form = useForm<LoginFormSchema>({
@@ -55,7 +56,11 @@ const LoginFrom = () => {
 
     try {
       await login(values.email, values.password);
-      router.push("/dashboard");
+      if (adminLogin) {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error: any) {
       console.log(error);
       setErrorMessage(
@@ -71,7 +76,11 @@ const LoginFrom = () => {
     setErrorMessage(null);
     try {
       await googleAuth();
-      router.push("/dashboard");
+      if (adminLogin) {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error: any) {
       setErrorMessage(error?.message || "Something went wrong.");
     } finally {
@@ -140,6 +149,21 @@ const LoginFrom = () => {
                   </FormItem>
                 )}
               />
+              <div className="flex items-center space-x-2 text-left">
+                <input
+                  id="adminLogin"
+                  name="adminLogin"
+                  type="checkbox"
+                  disabled={submitting}
+                  checked={adminLogin}
+                  onChange={(e) => setAdminLogin(e.target.checked)}
+                  className="accent-indigo-600 border-gray-300 rounded"
+                  style={{ width: 16, height: 16 }}
+                />
+                <label htmlFor="adminLogin" className="text-sm font-medium text-gray-700">
+                  Login as admin
+                </label>
+              </div>
               <Button
                 type="submit"
                 className="mt-2 w-full"

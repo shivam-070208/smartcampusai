@@ -1,7 +1,7 @@
 "use client";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/components/providers/auth-context";
-import { unauthorized } from "next/navigation";
+import { unauthorized, useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { motion } from "motion/react";
 import Loader from "@/components/common/loader";
@@ -69,7 +69,7 @@ const IssueDetailContent = ({ issueId }: { issueId: string }) => {
   const { data: issue } = useFetchIssue(issueId);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState<string | null>(null);
-
+  const router = useRouter(); 
   // Mutation for resolving/rejecting
   const resolveOrRejectMutation = useMutation({
     mutationFn: async ({ status }: { status: "resolved" | "rejected" }) => {
@@ -85,6 +85,7 @@ const IssueDetailContent = ({ issueId }: { issueId: string }) => {
         },
         body: JSON.stringify({ id: issueId, newStatus: status }),
       });
+      if (res.status === 403) router.push("/login");
       if (!res.ok) {
         throw new Error("Failed to update status");
       }
