@@ -10,7 +10,7 @@ export async function GET(request: NextRequest,   { params }: { params: Promise<
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  console.log(uid)
+
   const adminDoc = await db.collection("admin").where("uid", "==", uid).limit(1).get();
   const isAdmin = !adminDoc.empty;
   if (!isAdmin) {
