@@ -1,37 +1,31 @@
 import { NextResponse } from "next/server";
 
+import { db } from "@/lib/firebase-admin";
 
-let issuesDB = [
-  {
-    id: "101",
-    title: "Leaky pipe in Block A",
-    description: "Water leaking near room 104.",
-    status: "active",
-    reportedBy: "student1@college.edu",
-    date: "2023-12-27",
-  },
-  {
-    id: "102",
-    title: "Broken Projector",
-    description: "Projector in Lab 3 is not turning on.",
-    status: "pending",
-    reportedBy: "student2@college.edu",
-    date: "2023-12-28",
-  },
-];
+
 
 export async function GET() {
-  return NextResponse.json(issuesDB);
+  const issuesSnapshot = await db.collection("issues").get();
+  const issues = issuesSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  return NextResponse.json(issues);
 }
 
 export async function PATCH(request: Request) {
   const body = await request.json();
   const { id, newStatus } = body;
 
-  const issueIndex = issuesDB.findIndex((issue) => issue.id === id);
-  if (issueIndex > -1) {
-    issuesDB[issueIndex].status = newStatus;
+  const issueRef = db.collection("issues").doc(id);
+  const issueDoc = await issueRef.get();
+
+  if (!issueDoc.exists) {
+    return NextResponse.json({ message: "Issue not found", success: false }, { status: 404 });
   }
+
+  await issueRef.update({ status: newStatus });
 
   return NextResponse.json({ message: "Status Updated", success: true });
 }

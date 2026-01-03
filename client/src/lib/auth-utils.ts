@@ -19,3 +19,5 @@ export async function getUserIdFromRequest(request: NextRequest): Promise<{ user
     return { userId: null, email: null };
   }
 }
+
+

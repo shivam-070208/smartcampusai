@@ -46,6 +46,21 @@ const COLORS: Record<SeriesKey, string> = {
   rejected: "#f59e0b",
 };
 
+// Helper: parse "lng,lat" (string) as [number, number], null if invalid
+function parseLocation(location: string): [number, number] | null {
+  if (!location || typeof location !== "string") return null;
+  const [lng, lat] = location.split(",").map(Number);
+  if (
+    typeof lng === "number" &&
+    typeof lat === "number" &&
+    !isNaN(lng) &&
+    !isNaN(lat)
+  ) {
+    return [lng, lat];
+  }
+  return null;
+}
+
 const InlineChart = ({ className = "" }: { className?: string }) => {
   const { chartData } = useChartData();
   return (
@@ -164,31 +179,39 @@ const RecentIssues = ({ className = "" }: { className?: string }) => {
 };
 
 const UserDashBoard = () => {
-    const {summary} = useSummary()
+  const { summary } = useSummary();
+  const { recents } = useRecents();
+
+  // Collect coordinates from recents for the map
+  const coords =
+    (recents ?? [])
+      .map((it: { location: any }) => parseLocation(it.location))
+      .filter((c: unknown): c is [number, number] => Array.isArray(c) && c.length === 2);
+
   const summaryData = [
     {
       status: "active",
       title: "Active Sessions",
       description: "Issue that you reported and are active.",
-      data:summary.active||0,
+      data: summary.active || 0,
     },
     {
       status: "resolved",
       title: "Completed Tasks",
       description: "Issue that you reported and are succesfully resolved.",
-      data: summary.resolved||0,
+      data: summary.resolved || 0,
     },
     {
       status: "critical",
       title: "Critical Alerts",
       description: "Issue that you reported and are critical.",
-      data: summary.critical||0,
+      data: summary.critical || 0,
     },
     {
       status: "rejected",
       title: "Rejected Requests",
       description: "Issue that you reported and are rejected.",
-      data: summary.rejected||0,
+      data: summary.rejected || 0,
     },
   ];
 
@@ -209,7 +232,10 @@ const UserDashBoard = () => {
       </DashboardHeader>
       <DashboardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-[400px]">
         <Suspense fallback={<Loader />}>
-        <PinnedMap className="h-full w-full rounded-md md:row-span-2 overflow-hidden" />
+          <PinnedMap
+            className="h-full w-full rounded-md md:row-span-2 overflow-hidden"
+            coords={coords}
+          />
         </Suspense>
         <InlineChart />
         <RecentIssues className="flex flex-col gap-4 w-full overflow-y-auto" />

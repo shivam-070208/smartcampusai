@@ -1,11 +1,11 @@
 "use client";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/components/providers/auth-context";
 import { unauthorized } from "next/navigation";
 import { useParams } from "next/navigation";
 import { motion } from "motion/react";
 import Loader from "@/components/common/loader";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { PinnedMap } from "@/components/common/pinned-map";
 import Container from "@/components/common/container";
 
@@ -15,22 +15,19 @@ interface Issue {
   description: string;
   createdAt: string;
   status: "active" | "resolved" | "critical" | "rejected";
-  location: string;
+  location: string; // Must be a string like "77.216721,28.6448"
   images: string[];
   userId: string;
   date: string;
   ai_summary?: string;
 }
 
-// Helper to parse "lng,lat" location string into [lng, lat] tuple
+// Helper to parse "lng,lat" string
 function parseLocation(location: string): [number, number] | null {
   if (!location) return null;
-  const [lng, lat] = location.split(",").map(Number);
-  if (
-    typeof lng === "number" && typeof lat === "number" &&
-    !isNaN(lng) && !isNaN(lat)
-  ) {
-    return [lng, lat];
+  const parts = location.split(",").map((s) => parseFloat(s.trim()));
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return [parts[0], parts[1]];
   }
   return null;
 }
@@ -45,7 +42,7 @@ const useFetchIssue = (issueId: string) => {
         unauthorized();
       }
       const token = await user.getIdToken();
-      const res = await fetch(`/api/user/issue/${issueId}`, {
+      const res = await fetch(`/api/admin/issue/${issueId}`, {
         headers: { "X-User-Id": token },
       });
       if (!res.ok) {
@@ -67,13 +64,50 @@ const getStatusStyle = (status: Issue["status"]) => {
 };
 
 const IssueDetailContent = ({ issueId }: { issueId: string }) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: issue } = useFetchIssue(issueId);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionPending, setActionPending] = useState<string | null>(null);
 
-  // Map the "location" field to [lng, lat] array for use in the PinnedMap
+  // Mutation for resolving/rejecting
+  const resolveOrRejectMutation = useMutation({
+    mutationFn: async ({ status }: { status: "resolved" | "rejected" }) => {
+      if (!user?.uid) throw new Error("Not authenticated");
+      setActionPending(status);
+      setActionError(null);
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/admin/dashboard`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-User-Id": token,
+        },
+        body: JSON.stringify({ id: issueId, newStatus: status }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to update status");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      setActionPending(null);
+      queryClient.invalidateQueries({ queryKey: ["user/issue", issueId, user?.uid] });
+    },
+    onError: (error) => {
+      if (error instanceof Error) setActionError(error.message);
+      setActionPending(null);
+    },
+  });
+
+  // Parse the location field for map use
   const coords: [number, number][] = (() => {
     const parsed = parseLocation(issue.location);
     return parsed ? [parsed] : [];
   })();
+
+  // Button disabled logic
+  const canModify = issue.status === "active" || issue.status === "critical";
 
   return (
     <motion.div
@@ -102,6 +136,28 @@ const IssueDetailContent = ({ issueId }: { issueId: string }) => {
                   {issue.ai_summary}
                 </div>
               </div>
+            )}
+            {/* Action buttons for admins */}
+            {canModify && (
+              <div className="flex gap-3 mt-4">
+                <button
+                  className="px-4 py-2 text-sm rounded bg-green-600 hover:bg-green-700 text-white font-bold shadow disabled:opacity-50 transition"
+                  disabled={actionPending === "resolved"}
+                  onClick={() => resolveOrRejectMutation.mutate({ status: "resolved" })}
+                >
+                  {actionPending === "resolved" ? "Resolving..." : "Mark as Resolved"}
+                </button>
+                <button
+                  className="px-4 py-2 text-sm rounded bg-red-600 hover:bg-red-700 text-white font-bold shadow disabled:opacity-50 transition"
+                  disabled={actionPending === "rejected"}
+                  onClick={() => resolveOrRejectMutation.mutate({ status: "rejected" })}
+                >
+                  {actionPending === "rejected" ? "Rejecting..." : "Reject Issue"}
+                </button>
+              </div>
+            )}
+            {actionError && (
+              <div className="mt-2 text-red-600 text-sm font-semibold">{actionError}</div>
             )}
           </div>
           <div className="text-sm text-gray-500">

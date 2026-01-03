@@ -2,6 +2,7 @@
 
 import { useEffect, useState, ReactNode } from "react";
 import StatCard from "@/components/common/statcard";
+import Link from "next/link";
 
 interface Issue {
   id: string;
@@ -66,8 +67,6 @@ export default function AdminDashboard() {
     critical: issues.filter((i) => i.severity === "Critical" && i.status !== "resolved").length,
   };
 
-  if (loading) return <div className="p-10 text-center">Loading...</div>;
-
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8">
       <div className="mb-8">
@@ -109,7 +108,6 @@ export default function AdminDashboard() {
           color="bg-red-50 text-red-700 border-red-200"
           isActive={filter === "critical"}
           onClick={() => setFilter("critical")}
-          // 🔥 Flame/Alert Icon
           icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>}
         />
       </div>
@@ -166,17 +164,27 @@ export default function AdminDashboard() {
                       {issue.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    {issue.status !== "resolved" && (
-                      <button onClick={() => handleStatusUpdate(issue.id, "resolved")} className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded">
-                        ✓ Resolve
-                      </button>
-                    )}
-                    {issue.status !== "rejected" && issue.status !== "resolved" && (
-                      <button onClick={() => handleStatusUpdate(issue.id, "rejected")} className="text-xs border border-gray-300 hover:bg-gray-50 px-3 py-1.5 rounded">
-                        ✕ Reject
-                      </button>
-                    )}
+                  <td className="px-6 py-4 text-right">
+                    <Link
+                      href={`/admin/issue/${issue?.id}`}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium border border-blue-500 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-1 text-blue-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 12H9m12 8v-4a4 4 0 00-4-4H5a4 4 0 00-4 4v4"
+                        />
+                      </svg>
+                      View Details
+                    </Link>
                   </td>
                 </tr>
               ))}
